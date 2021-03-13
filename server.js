@@ -1,9 +1,12 @@
 
 // 1. import sqlite3 package that was installed
 const sqlite3 = require('sqlite3').verbose();
+// 15. import inputCheckmodule to validate data for POST api route
+const inputCheck = require('./utils/inputCheck');
 const express = require('express');
 const PORT = process.env.PORT || 3001;
 const app = express();
+
 
 
 // 2. Express middleware
@@ -107,7 +110,35 @@ app.delete('/api/candidate/:id', (req, res) => {
 //   console.log(result, this.lastID);
 // });
 
+// UPDATE API Endpoint/route above to Create a candidate like so...
+// 14. POST endpoint to create candidate
+app.post('/api/candidate', ({ body }, res) => {
+    const errors = inputCheck(body, 'first_name', 'last_name', 'industry_connected');
+    if (errors) {
+        res.status(400).json({ error: errors });
+        return;
+    }
+    // 16. Call to database
+    const sql = `INSERT INTO candidates (first_name, last_name, industry_connected) 
+              VALUES (?,?,?)`; // no id, because sqlite autogenerates it
+    const params = [body.first_name, body.last_name, body.industry_connected];
+    // ES5 function, not arrow function, to use `this`
+    db.run(sql, params, function (err, result) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
 
+        res.json({
+            message: 'success',
+            data: body,
+            id: this.lastID // whatever id was assigned
+        });
+    });
+
+});
+// Use insomnia to check POST logic, make sure to populate the body with a json obj that fulfills the params set
+// Use GET and modify the url to check the candidates obj now has the new obj created
 
 
 
