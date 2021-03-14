@@ -8,7 +8,6 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 
 
-
 // 2. Express middleware
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -51,6 +50,7 @@ app.get('/api/candidates', (req, res) => {
 });
 
 
+
 // 8. GET a single candidate
 // db.get(`SELECT * FROM candidates WHERE id = 1`, (err, row) => {
 //     if(err) {
@@ -83,6 +83,33 @@ app.get('/api/candidate/:id', (req, res) => {
         });
     });
 });
+
+// 22. PUT api route to update/change a candidate's data
+app.put('/api/candidate/:id', (req, res) => {
+    // Validate that party_id is provided before trying to update
+    const errors = inputCheck(req.body, 'party_id');
+    if (errors) {
+        res.status(400).json({ error: errors });
+        return;
+    }
+    const sql = `UPDATE candidates SET party_id = ? 
+                 WHERE id = ?`;
+    const params = [req.body.party_id, req.params.id];
+
+    db.run(sql, params, function (err, result) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
+            data: req.body,
+            changes: this.changes
+        });
+    });
+});
+
 
 // 9. Delete a candidate (`?` represents a place holder, in this case `1`)
 // db.run(`DELETE FROM candidates WHERE id = ?`, 1, function (err, result) {
@@ -122,8 +149,7 @@ app.delete('/api/candidate/:id', (req, res) => {
 //   }
 //   console.log(result, this.lastID);
 // });
-
-// UPDATE API Endpoint/route above to Create a candidate like so...
+// UPDATE API Endpoint/route above and nest into POST route to Create a candidate like so...
 // 14. POST endpoint to create candidate
 app.post('/api/candidate', ({ body }, res) => {
     const errors = inputCheck(body, 'first_name', 'last_name', 'industry_connected');
@@ -153,6 +179,56 @@ app.post('/api/candidate', ({ body }, res) => {
 // Use insomnia to check POST logic, make sure to populate the body with a json obj that fulfills the params set
 // Use GET and modify the url to check the candidates obj now has the new obj created
 // After update sqlite queries to get the data needed before updating API variables
+
+
+
+// 19. GET all parties
+app.get('/api/parties', (req, res) => {
+    const sql = `SELECT * FROM parties`;
+    const params = [];
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
+            data: rows
+        });
+    });
+});
+
+// 20. GET route to get parties by id
+app.get('/api/party/:id', (req, res) => {
+    const sql = `SELECT * FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.get(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
+            data: row
+        });
+    });
+});
+
+// 21. DELETE route to delete party by id
+app.delete('/api/party/:id', (req, res) => {
+    const sql = `DELETE FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.run(sql, params, function (err, result) {
+        if (err) {
+            res.status(400).json({ error: res.message });
+            return;
+        }
+
+        res.json({ message: 'successfully deleted', changes: this.changes });
+    });
+});
 
 
 
