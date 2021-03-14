@@ -7,10 +7,10 @@ const express = require('express');
 const PORT = process.env.PORT || 3001;
 const app = express();
 
-
 // 2. Express middleware
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+
 
 // 6. Connect to database
 const db = new sqlite3.Database('./db/election.db', err => {
@@ -20,13 +20,14 @@ const db = new sqlite3.Database('./db/election.db', err => {
 
     console.log('Connected to the election database.');
 });
+//==============CANDIDATE ROUTES===========================================
 
 // 7. Test connection to database (all method runs the SQL query and executes callback with all resulting rows that match query)
 // db.all(`SELECT * FROM candidates`, (err, rows) => {
 //     console.log(rows);
 // });
 // 11. UPDATE API Endpoint/route above to get ALL candidates like so...
-// GET all candidates
+// GET all candidates and their parties
 app.get('/api/candidates', (req, res) => {
     // const sql = `SELECT * FROM candidates`;
     // 17. Update the api route variable above like so...
@@ -49,8 +50,6 @@ app.get('/api/candidates', (req, res) => {
     });
 });
 
-
-
 // 8. GET a single candidate
 // db.get(`SELECT * FROM candidates WHERE id = 1`, (err, row) => {
 //     if(err) {
@@ -59,7 +58,7 @@ app.get('/api/candidates', (req, res) => {
 //     console.log(row);
 //   });
 // 12. UPDATE API Endpoint/route above to get a SINGLE candidate like so...
-// GET single candidate
+// GET single candidate data with party affiliation
 app.get('/api/candidate/:id', (req, res) => {
     // const sql = `SELECT * FROM candidates 
     //              WHERE id = ?`;
@@ -84,59 +83,6 @@ app.get('/api/candidate/:id', (req, res) => {
     });
 });
 
-// 22. PUT api route to update/change a candidate's data
-app.put('/api/candidate/:id', (req, res) => {
-    // Validate that party_id is provided before trying to update
-    const errors = inputCheck(req.body, 'party_id');
-    if (errors) {
-        res.status(400).json({ error: errors });
-        return;
-    }
-    const sql = `UPDATE candidates SET party_id = ? 
-                 WHERE id = ?`;
-    const params = [req.body.party_id, req.params.id];
-
-    db.run(sql, params, function (err, result) {
-        if (err) {
-            res.status(400).json({ error: err.message });
-            return;
-        }
-
-        res.json({
-            message: 'success',
-            data: req.body,
-            changes: this.changes
-        });
-    });
-});
-
-
-// 9. Delete a candidate (`?` represents a place holder, in this case `1`)
-// db.run(`DELETE FROM candidates WHERE id = ?`, 1, function (err, result) {
-//     if (err) {
-//         console.log(err);
-//     }
-//     console.log(result, this, this.changes); // `this` refers to Statement obj
-// });
-// 13. UPDATE API Endpoint/route above to DELETE a candidate like so...
-// DELETE a candidate
-app.delete('/api/candidate/:id', (req, res) => {
-    const sql = `DELETE FROM candidates WHERE id = ?`;
-    const params = [req.params.id];
-    db.run(sql, params, function (err, result) {
-        if (err) {
-            res.status(400).json({ error: res.message });
-            return;
-        }
-
-        res.json({
-            message: 'successfully deleted',
-            changes: this.changes
-        });
-    });
-});
-// check this route works by impleting DELETE method with Insomnia, use GET to return the updated array of candidates
-
 
 // 10. Create a candidate with hard coded values
 // const sql = `INSERT INTO candidates (id, first_name, last_name, industry_connected) 
@@ -150,7 +96,7 @@ app.delete('/api/candidate/:id', (req, res) => {
 //   console.log(result, this.lastID);
 // });
 // UPDATE API Endpoint/route above and nest into POST route to Create a candidate like so...
-// 14. POST endpoint to create candidate
+// 14. CREATE a candidate through POST api route 
 app.post('/api/candidate', ({ body }, res) => {
     const errors = inputCheck(body, 'first_name', 'last_name', 'industry_connected');
     if (errors) {
@@ -180,7 +126,59 @@ app.post('/api/candidate', ({ body }, res) => {
 // Use GET and modify the url to check the candidates obj now has the new obj created
 // After update sqlite queries to get the data needed before updating API variables
 
+// 22. UPDATE candidate's data by id through PUT api route 
+app.put('/api/candidate/:id', (req, res) => {
+    // Validate that party_id is provided before trying to update
+    const errors = inputCheck(req.body, 'party_id');
+    if (errors) {
+        res.status(400).json({ error: errors });
+        return;
+    }
+    const sql = `UPDATE candidates SET party_id = ? 
+                 WHERE id = ?`;
+    const params = [req.body.party_id, req.params.id];
 
+    db.run(sql, params, function (err, result) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
+            data: req.body,
+            changes: this.changes
+        });
+    });
+});
+
+// 9. Delete a candidate (`?` represents a place holder, in this case `1`)
+// db.run(`DELETE FROM candidates WHERE id = ?`, 1, function (err, result) {
+//     if (err) {
+//         console.log(err);
+//     }
+//     console.log(result, this, this.changes); // `this` refers to Statement obj
+// });
+// 13. UPDATE API Endpoint/route above to DELETE a candidate like so...
+// DELETE a candidate by id through delete api route
+app.delete('/api/candidate/:id', (req, res) => {
+    const sql = `DELETE FROM candidates WHERE id = ?`;
+    const params = [req.params.id];
+    db.run(sql, params, function (err, result) {
+        if (err) {
+            res.status(400).json({ error: res.message });
+            return;
+        }
+
+        res.json({
+            message: 'successfully deleted',
+            changes: this.changes
+        });
+    });
+});
+// check this route works by impleting DELETE method with Insomnia, use GET to return the updated array of candidates
+
+//=======================PARTY ROUTES==============================
 
 // 19. GET all parties
 app.get('/api/parties', (req, res) => {
