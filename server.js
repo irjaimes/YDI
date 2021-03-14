@@ -29,7 +29,13 @@ const db = new sqlite3.Database('./db/election.db', err => {
 // 11. UPDATE API Endpoint/route above to get ALL candidates like so...
 // GET all candidates
 app.get('/api/candidates', (req, res) => {
-    const sql = `SELECT * FROM candidates`;
+    // const sql = `SELECT * FROM candidates`;
+    // 17. Update the api route variable above like so...
+    const sql = `SELECT candidates.*, parties.name
+                 AS party_name
+                 FROM candidates
+                 LEFT JOIN parties
+                 ON candidates.party_id = parties.id`;
     const params = [];
     db.all(sql, params, (err, rows) => {
         if (err) {
@@ -55,8 +61,15 @@ app.get('/api/candidates', (req, res) => {
 // 12. UPDATE API Endpoint/route above to get a SINGLE candidate like so...
 // GET single candidate
 app.get('/api/candidate/:id', (req, res) => {
-    const sql = `SELECT * FROM candidates 
-                 WHERE id = ?`;
+    // const sql = `SELECT * FROM candidates 
+    //              WHERE id = ?`;
+    // 18. Update the api variable above like so...
+    const sql = `SELECT candidates.*, parties.name 
+                 AS party_name 
+                 FROM candidates 
+                 LEFT JOIN parties 
+                 ON candidates.party_id = parties.id 
+                 WHERE candidates.id = ?`;
     const params = [req.params.id];
     db.get(sql, params, (err, row) => {
         if (err) {
@@ -139,6 +152,7 @@ app.post('/api/candidate', ({ body }, res) => {
 });
 // Use insomnia to check POST logic, make sure to populate the body with a json obj that fulfills the params set
 // Use GET and modify the url to check the candidates obj now has the new obj created
+// After update sqlite queries to get the data needed before updating API variables
 
 
 
